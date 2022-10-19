@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
+st.set_page_config(page_title='Interactive Sizing App', page_icon='wooper.ico')
 st.title('Interactive Sizing App')
 
 DATE_COLUMN = 'date/time'
