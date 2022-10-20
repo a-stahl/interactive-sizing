@@ -38,6 +38,7 @@ hour_to_filter = st.slider('diameter', 1, 10, initial_level)
 def plot():
     lower_limit = hour_to_filter
     upper_limit = 10
+    limit = 14.5
     data = pd.read_csv('plot_data.csv', header=None)
     data.columns = ['ocr_val', 'hours']
     data['hours'] -= data['hours'][0]
@@ -45,10 +46,12 @@ def plot():
     data['date'] = data['date'] + pd.to_timedelta(data['hours'], unit='h')
     data['lower_limit'] = lower_limit
     data['upper_limit'] = upper_limit
+    data['limit'] = limit
     data['minutes'] = data['hours']*60
     line_rgb = st.text_input('Line rgb and transparency', 'rgba( 0, 204, 255, 0.4)')
     bottom_zone_rgb = st.text_input('Bottom zone rgb', 'rgb(255, 51, 51)')
     middle_zone_rgb = st.text_input('Middle zone rgb', 'rgb(255, 178, 102)')
+    top_zone_rgb = st.text_input('Top zone rgb', 'rgb(242, 242, 242)')
     #plot
     line = go.Scatter(
                 x=data['date'], 
@@ -72,6 +75,11 @@ def plot():
         x = data['date'],
         y = data['upper_limit']-data['lower_limit'],
         line=dict(width=0.1, color=middle_zone_rgb),
+        stackgroup='one'),
+                       go.Scatter(
+        x = data['date'],
+        y = data['limit']-data['upper_limit'],
+        line=dict(width=0.1, color=top_zone_rgb),
         stackgroup='one')
     ])
     fig3 = go.Figure(data=fig2.data + fig1.data)
@@ -82,7 +90,8 @@ def plot():
         legend_title="",
         showlegend=False,
         xaxis_range=[data['date'][0],data['date'][data.index[-1]]],
-        plot_bgcolor = 'rgb(242, 242, 242)'
+        yaxis_range=[0,limit],
+        #plot_bgcolor = 'rgb(242, 242, 242)'
     )
     st.plotly_chart(fig3, use_container_width=True)
 plot()
