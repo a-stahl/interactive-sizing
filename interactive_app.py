@@ -3,13 +3,19 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
+import base64
+from PIL import Image
 
 st.set_page_config(page_title='Interactive Sizing App', page_icon='wooper.ico')
 st.title('Interactive Sizing App')
-line_rgb = st.text_input('Line rgb and transparency', 'rgba( 0, 204, 255, 0.4)')
-bottom_zone_rgb = st.text_input('Bottom zone rgb', 'rgb(255, 51, 51)')
-middle_zone_rgb = st.text_input('Middle zone rgb', 'rgb(255, 178, 102)')
-top_zone_rgb = st.text_input('Top zone rgb', 'rgb(242, 242, 242)')
+# line_rgb = st.text_input('Line rgb and transparency', 'rgba( 0, 204, 255, 0.4)')
+# bottom_zone_rgb = st.text_input('Bottom zone rgb', 'rgb(255, 51, 51)')
+# middle_zone_rgb = st.text_input('Middle zone rgb', 'rgb(255, 178, 102)')
+# top_zone_rgb = st.text_input('Top zone rgb', 'rgb(242, 242, 242)')
+line_rgb = 'rgb(2, 135, 202)'
+bottom_zone_rgb = 'rgb(242, 90, 90)'
+middle_zone_rgb = 'rgb(255, 191, 128)'
+top_zone_rgb = 'rgb(185, 223, 209)'
 # Function to calculate time duration
 def interpolated_intercepts(x, y1, y2):
     """Find the intercepts of two curves, given by the same x data"""
@@ -61,7 +67,18 @@ def interpolated_intercepts(x, y1, y2):
 
 
 initial_level = 4
+
+#images
+col1, col2, col3 = st.columns([1, 3, 1])
+image = Image.open('img_01.jpg') 
+new_image = image.resize((350, 240))
+with col2:
+    st.image(new_image)
+
+
 plot_spot = st.empty()
+metrics_spot = st.empty()
+
 
 # input widgets
 col1, col2 = st.columns([2, 1])
@@ -183,6 +200,18 @@ if time_duration_redorange == 0:
 time_duration_orange = abs(time_duration_redorange - time_duration_red)
 time_duration_orange_pct=np.round(time_duration_orange/data['minutes'][data.index[-1]]*100,2)
 time_duration_red_pct=np.round(time_duration_red/data['minutes'][data.index[-1]]*100,2)
-col1, col2, col3 = st.columns(3)
-col1.metric(label="Time duration <95% Accuracy", value="{} %".format(time_duration_orange_pct), delta=None)
-col3.metric(label="Time duration <98.5% Accuracy", value="{} %".format(time_duration_red_pct), delta=None)
+with metrics_spot:
+    col1, col2, col3 = st.columns(3)
+    col1.metric(label="Time duration <95% Accuracy", value="{} %".format(time_duration_orange_pct), delta=None)
+    col3.metric(label="Time duration <98.5% Accuracy", value="{} %".format(time_duration_red_pct), delta=None)
+
+
+## gifs
+# file_ = open("giphy.gif", "rb")
+# contents = file_.read()
+# data_url = base64.b64encode(contents).decode("utf-8")
+# file_.close()
+# st.markdown(
+#     f'<img src="data:image/gif;base64,{data_url}" alt="cat gif">',
+#     unsafe_allow_html=True,
+# )
