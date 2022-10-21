@@ -180,7 +180,7 @@ if time_duration_redorange == 0:
     else:
         time_duration_redorange = 0
 
-time_duration_orange = time_duration_redorange - time_duration_red
+time_duration_orange = abs(time_duration_redorange - time_duration_red)
 time_duration_orange_pct=np.round(time_duration_orange/data['minutes'][data.index[-1]]*100,2)
 time_duration_red_pct=np.round(time_duration_red/data['minutes'][data.index[-1]]*100,2)
 col1, col2, col3 = st.columns(3)
