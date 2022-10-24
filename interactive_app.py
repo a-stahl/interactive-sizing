@@ -6,8 +6,31 @@ import plotly.graph_objects as go
 import base64
 from PIL import Image
 
-st.set_page_config(page_title='Interactive Sizing App', page_icon='wooper.ico')
-st.title('Interactive Sizing App')
+st.set_page_config(page_title='Interactive Sizing App', layout='wide',page_icon='wooper.ico')
+col1, col2, col3 = st.columns([1, 1, 4])
+image = Image.open('Olea_logo.png') 
+new_image = image.resize((150, 110))
+with col1:
+    st.image(new_image)
+with col3:
+    st.title('Interactive Sizing App')
+st.markdown("""
+        <style>
+               .css-18e3th9 {
+                    padding-top: 3rem;
+                    padding-bottom: 10rem;
+                    padding-left: 5rem;
+                    padding-right: 5rem;
+                }
+               .css-1d391kg {
+                    padding-top: 3.5rem;
+                    padding-right: 1rem;
+                    padding-bottom: 3.5rem;
+                    padding-left: 1rem;
+                }
+        </style>
+        """, unsafe_allow_html=True)
+
 # line_rgb = st.text_input('Line rgb and transparency', 'rgba( 0, 204, 255, 0.4)')
 # bottom_zone_rgb = st.text_input('Bottom zone rgb', 'rgb(255, 51, 51)')
 # middle_zone_rgb = st.text_input('Middle zone rgb', 'rgb(255, 178, 102)')
@@ -66,17 +89,34 @@ def interpolated_intercepts(x, y1, y2):
     return np.array(xcs), np.array(ycs)
 
 
-initial_level = 4
+initial_level = 8
 
 #images
-col1, col2, col3 = st.columns([1, 3, 1])
-image = Image.open('img_01.jpg') 
-new_image = image.resize((350, 240))
+# col1, col2, col3 = st.columns([1, 3, 1])
+# image = Image.open('img_01.jpg') 
+# new_image = image.resize((350, 240))
+# with col2:
+#     st.image(new_image)
+
+col1, col2 = st.columns([2, 1])
+with col1:
+    plot_spot = st.empty()
 with col2:
-    st.image(new_image)
+    # video_file = open('sizing1.mkv', 'rb')
+    # video_bytes = video_file.read()
+    # st.video(video_bytes)
+    with open('sizing1.mp4', "rb") as f:
+        video_content = f.read()
+
+    video_str = f"data:video/mp4;base64,{base64.b64encode(video_content).decode()}"
+    col2.markdown(f"""
+        <video controls width="500" autoplay="true" muted="true" loop="true">
+            <source src="{video_str}" type="video/mp4">
+        </video>
+    """, unsafe_allow_html=True)
+    
 
 
-plot_spot = st.empty()
 metrics_spot = st.empty()
 
 
@@ -84,7 +124,7 @@ metrics_spot = st.empty()
 col1, col2 = st.columns([2, 1])
 
 with col1:
-    hour_to_filter = st.slider('diameter', 1, 10, initial_level)
+    hour_to_filter = st.slider('Diameter (Inch)', 1, 8, initial_level)
 
 with col2:
     meter_type = st.radio(
@@ -95,10 +135,11 @@ with col2:
 if meter_type == 'Meter #1':
     data = pd.read_csv('plot_data.csv', header=None)
     data.columns = ['ocr_val', 'hours']
+    data.ocr_val = data.ocr_val.values + 3
 if meter_type == 'Meter #2':
     data = pd.read_csv('plot_data.csv', header=None)
     data.columns = ['ocr_val', 'hours']
-    data.ocr_val = 2*data['ocr_val'].mean() - data.ocr_val.values + 3
+    data.ocr_val = 2*data['ocr_val'].mean() - data.ocr_val.values + 3.2
 if meter_type == 'Meter #3':
     data = pd.read_csv('plot_data.csv', header=None)
     data.columns = ['ocr_val', 'hours']
@@ -155,10 +196,20 @@ fig3.update_layout(
     showlegend=True,
     xaxis_range=[data['date'][0],data['date'][data.index[-1]]],
     yaxis_range=[0,limit],
+    width = 800,
+    height = 300,
+    margin=dict(l=0, r=0, t=0, b=0),
+    legend=dict(
+    orientation="h",
+    yanchor="bottom",
+    y=1.02,
+    xanchor="right",
+    x=1
+)
     #plot_bgcolor = 'rgb(242, 242, 242)'
 )
 with plot_spot:
-    st.plotly_chart(fig3, width=800, height=400)
+    st.plotly_chart(fig3)
 
 # calculate time_duration_red and time_duration_orange
 xcs, ycs = interpolated_intercepts(data['minutes'].to_numpy(),data['ocr_val'].to_numpy(),data['lower_limit'].to_numpy())
@@ -197,21 +248,14 @@ if time_duration_redorange == 0:
     else:
         time_duration_redorange = 0
 
-time_duration_orange = abs(time_duration_redorange - time_duration_red)
-time_duration_orange_pct=np.round(time_duration_orange/data['minutes'][data.index[-1]]*100,2)
+#time_duration_orange = abs(time_duration_redorange - time_duration_red)
+time_duration_redorange_pct=np.round(time_duration_redorange/data['minutes'][data.index[-1]]*100,2)
 time_duration_red_pct=np.round(time_duration_red/data['minutes'][data.index[-1]]*100,2)
 with metrics_spot:
-    col1, col2, col3 = st.columns(3)
-    col1.metric(label="Time duration <95% Accuracy", value="{} %".format(time_duration_orange_pct), delta=None)
-    col3.metric(label="Time duration <98.5% Accuracy", value="{} %".format(time_duration_red_pct), delta=None)
+    col1, col2, col3, col4 = st.columns([1,2,2,3])
+    col2.metric(label="Time duration <98.5% Accuracy", value="{} %".format(time_duration_redorange_pct), delta=None)
+    col3.metric(label="Time duration <95% Accuracy", value="{} %".format(time_duration_red_pct), delta=None)
 
-
-## gifs
-# file_ = open("giphy.gif", "rb")
-# contents = file_.read()
-# data_url = base64.b64encode(contents).decode("utf-8")
-# file_.close()
-# st.markdown(
-#     f'<img src="data:image/gif;base64,{data_url}" alt="cat gif">',
-#     unsafe_allow_html=True,
-# )
+col1, col2, col3, col4 = st.columns([1,4,4,1])
+with col4:
+    st.write('Not to scale')
