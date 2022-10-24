@@ -20,7 +20,7 @@ with col2:
     st.markdown(""" <style> .font2 {
     font-size:20px ; font-family: 'Open Sans'; color: black;text-align: center;} 
     </style> """, unsafe_allow_html=True)
-    st.markdown('<p class="font2">Meter size Affect on Accuracy</p>', unsafe_allow_html=True)
+    st.markdown('<p class="font2">Meter size Effect on Accuracy</p>', unsafe_allow_html=True)
 st.markdown("""
         <style>
                .css-18e3th9 {
@@ -108,7 +108,7 @@ with col2:
 if meter_type == 'Meter #1':
     data = pd.read_csv('plot_data.csv', header=None)
     data.columns = ['ocr_val', 'hours']
-    data.ocr_val = data.ocr_val.values + 3.0
+    data.ocr_val = data.ocr_val.values + 8.25
 if meter_type == 'Meter #2':
     data = pd.read_csv('plot_data.csv', header=None)
     data.columns = ['ocr_val', 'hours']
