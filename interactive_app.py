@@ -7,13 +7,20 @@ import base64
 from PIL import Image
 
 st.set_page_config(page_title='Interactive Sizing App', layout='wide',page_icon='wooper.ico')
-col1, col2, col3 = st.columns([1, 1, 4])
+col1, col2, col3 = st.columns([1, 1, 1])
 image = Image.open('Olea_logo.png') 
-new_image = image.resize((150, 110))
+new_image = image.resize((140, 100))
 with col1:
     st.image(new_image)
-with col3:
-    st.title('Interactive Sizing App')
+with col2:
+    st.markdown(""" <style> .font {
+    font-size:40px ; font-family: 'Open Sans'; color: black;text-align: center;} 
+    </style> """, unsafe_allow_html=True)
+    st.markdown('<p class="font"><strong>Sizing Error<strong></p>', unsafe_allow_html=True)
+    st.markdown(""" <style> .font2 {
+    font-size:20px ; font-family: 'Open Sans'; color: black;text-align: center;} 
+    </style> """, unsafe_allow_html=True)
+    st.markdown('<p class="font2">Meter size Affect on Accuracy</p>', unsafe_allow_html=True)
 st.markdown("""
         <style>
                .css-18e3th9 {
@@ -31,29 +38,14 @@ st.markdown("""
         </style>
         """, unsafe_allow_html=True)
 
-# line_rgb = st.text_input('Line rgb and transparency', 'rgba( 0, 204, 255, 0.4)')
-# bottom_zone_rgb = st.text_input('Bottom zone rgb', 'rgb(255, 51, 51)')
-# middle_zone_rgb = st.text_input('Middle zone rgb', 'rgb(255, 178, 102)')
-# top_zone_rgb = st.text_input('Top zone rgb', 'rgb(242, 242, 242)')
 line_rgb = 'rgb(2, 135, 202)'
 bottom_zone_rgb = 'rgb(242, 90, 90)'
 middle_zone_rgb = 'rgb(255, 191, 128)'
 top_zone_rgb = 'rgb(185, 223, 209)'
 # Function to calculate time duration
 def interpolated_intercepts(x, y1, y2):
-    """Find the intercepts of two curves, given by the same x data"""
 
     def intercept(point1, point2, point3, point4):
-        """find the intersection between two lines
-        the first line is defined by the line between point1 and point2
-        the first line is defined by the line between point3 and point4
-        each point is an (x,y) tuple.
-
-        So, for example, you can find the intersection between
-        intercept((0,0), (1,1), (0,1), (1,0)) = (0.5, 0.5)
-
-        Returns: the intercept, in (x,y) format
-        """    
 
         def line(p1, p2):
             A = (p1[1] - p2[1])
@@ -91,30 +83,11 @@ def interpolated_intercepts(x, y1, y2):
 
 initial_level = 8
 
-#images
-# col1, col2, col3 = st.columns([1, 3, 1])
-# image = Image.open('img_01.jpg') 
-# new_image = image.resize((350, 240))
-# with col2:
-#     st.image(new_image)
-
 col1, col2 = st.columns([2, 1])
 with col1:
     plot_spot = st.empty()
 with col2:
-    # video_file = open('sizing1.mkv', 'rb')
-    # video_bytes = video_file.read()
-    # st.video(video_bytes)
-    with open('sizing1.mp4', "rb") as f:
-        video_content = f.read()
-
-    video_str = f"data:video/mp4;base64,{base64.b64encode(video_content).decode()}"
-    col2.markdown(f"""
-        <video controls width="500" autoplay="true" muted="true" loop="true">
-            <source src="{video_str}" type="video/mp4">
-        </video>
-    """, unsafe_allow_html=True)
-    
+    video_spot = st.empty()    
 
 
 metrics_spot = st.empty()
@@ -135,7 +108,7 @@ with col2:
 if meter_type == 'Meter #1':
     data = pd.read_csv('plot_data.csv', header=None)
     data.columns = ['ocr_val', 'hours']
-    data.ocr_val = data.ocr_val.values + 3
+    data.ocr_val = data.ocr_val.values + 3.0
 if meter_type == 'Meter #2':
     data = pd.read_csv('plot_data.csv', header=None)
     data.columns = ['ocr_val', 'hours']
@@ -149,7 +122,7 @@ data['hours'] -= data['hours'][0]
 data['date'] = pd.to_datetime(27,errors='ignore', unit='d',origin='2022-08')
 data['date'] = data['date'] + pd.to_timedelta(data['hours'], unit='h')
 lower_limit = hour_to_filter
-upper_limit = lower_limit + 6
+upper_limit = 6 + 1.5*lower_limit
 limit = max(upper_limit + 4.5,data['ocr_val'].max() + 1.0)
 
 data['lower_limit'] = lower_limit
@@ -211,44 +184,57 @@ fig3.update_layout(
 with plot_spot:
     st.plotly_chart(fig3)
 
+video_logic_df = pd.read_csv('video_logic.csv')
+video_no = video_logic_df[meter_type][hour_to_filter-1]
+video_file = 'sizing' + str(video_no) + '.mp4'
+with video_spot:
+    with open(video_file, "rb") as f:
+
+        video_content = f.read()
+
+        video_str = f"data:video/mp4;base64,{base64.b64encode(video_content).decode()}"
+        st.markdown(f"""
+            <video controls width="500" autoplay="true" muted="true" loop="true">
+                <source src="{video_str}" type="video/mp4">
+            </video>
+        """, unsafe_allow_html=True)
+        
 # calculate time_duration_red and time_duration_orange
+
 xcs, ycs = interpolated_intercepts(data['minutes'].to_numpy(),data['ocr_val'].to_numpy(),data['lower_limit'].to_numpy())
-if data['ocr_val'][0]<data['lower_limit'][0]:
-    xcs = np.insert(xcs, 0, data['ocr_val'][0], axis=0)
-time_diff = np.diff(xcs.flatten())
 if xcs.size == 0:
-    initial_sign = -1
-else:
-    initial_sign = np.interp(xcs[0]+0.1, data['minutes'].to_numpy(), data['ocr_val'].to_numpy()) - lower_limit
-if initial_sign<0:
-    time_duration_red = time_diff[::2].sum()
-else:
-    time_duration_red = time_diff[::2].sum()
-if time_duration_red == 0:
-    if data['ocr_val'][0]<data['upper_limit'][0]:
+    if data['ocr_val'][0] < lower_limit:
         time_duration_red = data['minutes'][data.index[-1]]
     else:
         time_duration_red = 0
-
+else:
+    time_diff = np.diff(xcs.flatten())
+    initial_sign = np.interp(xcs[0]+0.01, data['minutes'].to_numpy(), data['ocr_val'].to_numpy()) - lower_limit
+    if initial_sign>0:
+        time_duration_red = time_diff[1::2].sum()
+        time_duration_red = time_duration_red + float(xcs[0]-data['minutes'][0])
+    else:
+        time_duration_red = time_diff[::2].sum()
+    final_sign = np.interp(xcs[-1]+0.01, data['minutes'].to_numpy(), data['ocr_val'].to_numpy()) - lower_limit
+    if final_sign<0:
+        time_duration_red = time_duration_red + float(data['minutes'][data.index[-1]] - xcs[-1])
 xcs, ycs = interpolated_intercepts(data['minutes'].to_numpy(),data['ocr_val'].to_numpy(),data['upper_limit'].to_numpy())
-if data['ocr_val'][0]<data['upper_limit'][0]:
-    xcs = np.insert(xcs, 0, data['ocr_val'][0], axis=0)
-time_diff = np.diff(xcs.flatten())
 if xcs.size == 0:
-    initial_sign = -1
-else:
-    initial_sign = np.interp(xcs[0]+0.1, data['minutes'].to_numpy(), data['ocr_val'].to_numpy()) - lower_limit
-if initial_sign<0:
-    time_duration_redorange = time_diff[::2].sum()
-else:
-    time_duration_redorange = time_diff[::2].sum()
-if time_duration_redorange == 0:
-    if data['ocr_val'][0]<data['upper_limit'][0]:
+    if data['ocr_val'][0] < upper_limit:
         time_duration_redorange = data['minutes'][data.index[-1]]
     else:
         time_duration_redorange = 0
-
-#time_duration_orange = abs(time_duration_redorange - time_duration_red)
+else:
+    time_diff = np.diff(xcs.flatten())
+    initial_sign = np.interp(xcs[0]+0.01, data['minutes'].to_numpy(), data['ocr_val'].to_numpy()) - upper_limit
+    if initial_sign>0:
+        time_duration_redorange = time_diff[1::2].sum()
+        time_duration_redorange = time_duration_redorange + float(xcs[0]-data['minutes'][0])
+    else:
+        time_duration_redorange = time_diff[::2].sum()
+    final_sign = np.interp(xcs[-1]+0.01, data['minutes'].to_numpy(), data['ocr_val'].to_numpy()) - upper_limit
+    if final_sign<0:
+        time_duration_redorange = time_duration_redorange + float(data['minutes'][data.index[-1]] - xcs[-1])
 time_duration_redorange_pct=np.round(time_duration_redorange/data['minutes'][data.index[-1]]*100,2)
 time_duration_red_pct=np.round(time_duration_red/data['minutes'][data.index[-1]]*100,2)
 with metrics_spot:
