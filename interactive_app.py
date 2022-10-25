@@ -112,11 +112,11 @@ if meter_type == 'Meter #1':
 if meter_type == 'Meter #2':
     data = pd.read_csv('plot_data.csv', header=None)
     data.columns = ['ocr_val', 'hours']
-    data.ocr_val = 2*data['ocr_val'].mean() - data.ocr_val.values + 3.2
+    data.ocr_val = 2*data['ocr_val'].mean() - data.ocr_val.values + 3.2 + 11
 if meter_type == 'Meter #3':
     data = pd.read_csv('plot_data.csv', header=None)
     data.columns = ['ocr_val', 'hours']
-    data.ocr_val = data.ocr_val.values[::-1] + 7
+    data.ocr_val = data.ocr_val.values[::-1] + 7 + 5
 
 data['hours'] -= data['hours'][0]
 data['date'] = pd.to_datetime(27,errors='ignore', unit='d',origin='2022-08')
